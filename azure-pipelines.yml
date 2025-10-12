@@ -10,62 +10,49 @@ variables:
   dotnetSdkVersion: '8.x'
 
 steps:
-# Use .NET SDK
+
 - task: UseDotNet@2
   displayName: 'Use .NET SDK $(dotnetSdkVersion)'
   inputs:
-    packageType: sdk
+
     version: '$(dotnetSdkVersion)'
 
-# Install dependencies
+
 - task: Npm@1
   displayName: 'Run npm install'
   inputs:
     verbose: false
 
-# Compile Sass assets
+
 - script: 'npx sass $(wwwrootDir):$(wwwrootDir)'
   displayName: 'Compile Sass assets'
 
-# Run gulp tasks
+
 - script: 'npx gulp'
   displayName: 'Run gulp tasks'
 
-# Write build info
+
 - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
   displayName: 'Write build info'
   workingDirectory: $(wwwrootDir)
 
-# Restore project dependencies
+
 - task: DotNetCoreCLI@2
   displayName: 'Restore project dependencies'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
-# Build project
-- task: DotNetCoreCLI@2
-  displayName: 'Build the project - $(buildConfiguration)'
-  inputs:
-    command: 'build'
-    arguments: '--no-restore --configuration $(buildConfiguration)'
-    projects: '**/*.csproj'
 
-# Publish compiled output to artifact staging directory
-- task: DotNetCoreCLI@2
-  displayName: 'Publish the project - $(buildConfiguration)'
-  inputs:
-    command: 'publish'
-    projects: '**/*.csproj'
-    publishWebProjects: false
-    arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
-    zipAfterPublish: true
+- template: templates/build.yml
+  parameters:
+    buildConfiguration: 'Debug'
 
-# Publish as artifact so you can download it from the build summary
+- template: templates/build.yml
+  parameters:
+    buildConfiguration: 'Release'
+
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
   condition: succeeded()
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+  
