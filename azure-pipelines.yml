@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: 'Ubuntu VPS'
+  name: 'Ubuntu VPS'
 
 variables:
   buildConfiguration: 'Release'
