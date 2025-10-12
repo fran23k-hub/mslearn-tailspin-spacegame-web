@@ -3,37 +3,47 @@ trigger:
 
 pool:
   name: 'Ubuntu VPS'
-
+  
 variables:
   buildConfiguration: 'Release'
+  wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
+  dotnetSdkVersion: '8.x'
 
 steps:
+# Use .NET SDK
 - task: UseDotNet@2
-  displayName: 'Use .NET SDK 8.x'
+  displayName: 'Use .NET SDK $(dotnetSdkVersion)'
   inputs:
-    version: '8.x'
+    packageType: sdk
+    version: '$(dotnetSdkVersion)'
 
+# Install dependencies
 - task: Npm@1
   displayName: 'Run npm install'
   inputs:
     verbose: false
 
-- script: 'npx sass Tailspin.SpaceGame.Web/wwwroot:Tailspin.SpaceGame.Web/wwwroot'
+# Compile Sass assets
+- script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
   displayName: 'Compile Sass assets'
 
+# Run gulp tasks
 - script: 'npx gulp'
   displayName: 'Run gulp tasks'
 
+# Write build info
 - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
   displayName: 'Write build info'
-  workingDirectory: Tailspin.SpaceGame.Web/wwwroot
+  workingDirectory: $(wwwrootDir)
 
+# Restore project dependencies
 - task: DotNetCoreCLI@2
   displayName: 'Restore project dependencies'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
+# Build project
 - task: DotNetCoreCLI@2
   displayName: 'Build the project - $(buildConfiguration)'
   inputs:
@@ -41,17 +51,21 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
-# 🏗 Publish the project output to the artifact staging directory
+# Publish compiled output to artifact staging directory
 - task: DotNetCoreCLI@2
   displayName: 'Publish the project - $(buildConfiguration)'
   inputs:
     command: 'publish'
     projects: '**/*.csproj'
     publishWebProjects: false
-    arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/Release'
+    arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
     zipAfterPublish: true
 
-# 💾 Upload the published zip as a pipeline artifact
+# Publish as artifact so you can download it from the build summary
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
   condition: succeeded()
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
