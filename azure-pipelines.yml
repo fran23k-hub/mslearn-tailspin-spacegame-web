@@ -8,36 +8,44 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+# Install the required .NET SDK
 - task: UseDotNet@2
   displayName: 'Use .NET SDK 8.x'
   inputs:
     packageType: sdk
     version: '8.x'
 
+# Install Node.js dependencies
 - task: Npm@1
   displayName: 'Run npm install'
   inputs:
     verbose: false
 
-- script: './node_modules/.bin/node-sass Tailspin.SpaceGame.Web/wwwroot --output Tailspin.SpaceGame.Web/wwwroot'
+# Compile SCSS/SASS assets using Dart Sass (modern version)
+- script: 'npx sass Tailspin.SpaceGame.Web/wwwroot:Tailspin.SpaceGame.Web/wwwroot'
   displayName: 'Compile Sass assets'
 
+# Run Gulp tasks (minification, bundling, etc.)
 - task: gulp@1
   displayName: 'Run gulp tasks'
 
+# Write build information into a file
 - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
   displayName: 'Write build info'
   workingDirectory: Tailspin.SpaceGame.Web/wwwroot
 
+# Restore .NET project dependencies
 - task: DotNetCoreCLI@2
   displayName: 'Restore project dependencies'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
+# Build the project in Release mode
 - task: DotNetCoreCLI@2
   displayName: 'Build the project - Release'
   inputs:
     command: 'build'
     arguments: '--no-restore --configuration Release'
     projects: '**/*.csproj'
+
