@@ -3,7 +3,7 @@ trigger:
 
 pool:
   name: 'Ubuntu VPS'
-  
+
 variables:
   buildConfiguration: 'Release'
   wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
@@ -24,7 +24,7 @@ steps:
     verbose: false
 
 # Compile Sass assets
-- script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
+- script: 'npx sass $(wwwrootDir):$(wwwrootDir)'
   displayName: 'Compile Sass assets'
 
 # Run gulp tasks
