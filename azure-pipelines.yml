@@ -15,6 +15,13 @@ steps:
   inputs:
     version: '$(dotnetSdkVersion)'
 
+# ▼▼ ADD THIS ▼▼
+- task: UseNode@1
+  displayName: 'Use Node 16'
+  inputs:
+    version: '16'
+# ▲▲ ADD THIS ▲▲
+
 - task: Npm@1
   displayName: 'Run npm install'
   inputs:
@@ -55,3 +62,4 @@ steps:
 - task: PublishBuildArtifacts@1
   displayName: 'Publish Artifact: drop'
   condition: succeeded()
+
